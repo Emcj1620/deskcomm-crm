@@ -8,7 +8,11 @@ WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@9.15.9 --activate
 COPY package.json pnpm-lock.yaml ./
 COPY patches ./patches
-RUN pnpm install --frozen-lockfile
+# The image build needs the toolchain declared in devDependencies (Tailwind's
+# PostCSS plugin, TypeScript, and Next's build plugins). Coolify exposes
+# NODE_ENV=production while building, so make this explicit instead of letting
+# pnpm silently omit the build toolchain.
+RUN pnpm install --frozen-lockfile --prod=false
 
 # ---- build: gera .next/standalone ----
 FROM node:22-alpine AS build
