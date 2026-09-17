@@ -100,7 +100,7 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withSentryConfig(nextConfig, {
+const sentryConfig = {
   // For all available options, see:
   // https://www.npmjs.com/package/@sentry/webpack-plugin#options
 
@@ -136,4 +136,11 @@ export default withSentryConfig(nextConfig, {
       removeDebugLogging: true,
     },
   },
-});
+};
+
+// O ambiente self-hosted pode operar sem credenciais do Sentry. Nesse caso,
+// não injete o plugin no build: ele tenta preparar source maps mesmo sem
+// destino configurado e pode deixar a compilação parada indefinidamente.
+export default process.env.SENTRY_AUTH_TOKEN
+  ? withSentryConfig(nextConfig, sentryConfig)
+  : nextConfig;
