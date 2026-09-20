@@ -2,6 +2,7 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookieSecure } from "@/lib/supabase/cookie-secure";
 import { NextResponse, type NextRequest } from "next/server";
 import { env } from "@/lib/env";
+import { decideAdminOrigin, isAdminPath } from "@/lib/auth/admin-origin";
 import { isPublicPath } from "@/lib/auth/public-paths";
 import {
   verifyImpersonateCookieEdge,
@@ -22,12 +23,27 @@ export async function proxy(request: NextRequest) {
   response.headers.set("x-pathname", pathname);
   request.headers.set("x-pathname", pathname);
 
-  // EPIC-11: in dev we route by path (`/admin/*`); in prod the
-  // `admin.deskcomm.com` sub-domain is mapped via Vercel rewrites to the same
-  // `/admin/*` paths. The host-based branch below stays a NOOP today and only
-  // exists as documentation of the intended deploy topology.
   const host = request.headers.get("host") ?? "";
-  const isAdminSurface = host.startsWith("admin.") || pathname.startsWith("/admin");
+  const adminOrigin = decideAdminOrigin({
+    host,
+    pathname,
+    appUrl: env.NEXT_PUBLIC_APP_URL,
+    adminUrl: env.NEXT_PUBLIC_ADMIN_URL,
+  });
+  if (adminOrigin.kind === "reject") {
+    // 404 em vez de redirecionar: o host dos clientes não anuncia onde fica o
+    // painel. Mesmo no host certo, JWT + platform_admins + MFA seguem obrigatórios.
+    return pathname.startsWith("/api/")
+      ? NextResponse.json(
+          { error: { code: "not_found", message: "Not found" } },
+          { status: adminOrigin.status, headers: { "x-request-id": requestId } },
+        )
+      : new NextResponse("Not Found", {
+          status: adminOrigin.status,
+          headers: { "x-request-id": requestId },
+        });
+  }
+  const adminSurface = isAdminPath(pathname);
 
   if (isPublicPath(pathname)) {
     return response;
@@ -111,7 +127,7 @@ export async function proxy(request: NextRequest) {
   // /admin/* additionally requires platform_admin (early gate — authoritative
   // check is server-side in `requirePlatformAdmin`). Skip the RPC for
   // `/admin/forbidden` (rendered to non-admins, would otherwise loop).
-  if (isAdminSurface && pathname.startsWith("/admin") && pathname !== "/admin/forbidden") {
+  if (adminSurface && pathname.startsWith("/admin") && pathname !== "/admin/forbidden") {
     const { data: isAdmin, error } = await supabase.rpc("fn_is_platform_admin");
     if (error || !isAdmin) {
       return NextResponse.redirect(new URL("/admin/forbidden", request.url));

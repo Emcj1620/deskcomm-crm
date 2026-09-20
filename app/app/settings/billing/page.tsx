@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
-import { ROLE_RANK } from "@/lib/auth/types";
+import { roleHasPermission } from "@/lib/auth/permissions";
 import { emailDeSuporte } from "@/lib/branding/saida";
 import { Card } from "@/components/ui/card";
 import { traduzir } from "@/lib/i18n/dicionario";
@@ -18,7 +18,7 @@ export default async function BillingPage() {
   // spec 13 §4: billing é admin-only (viewer/agent/manager = none).
   const user = await requireAuth();
   const activeOrg = await resolveActiveOrg(user);
-  if (!activeOrg || ROLE_RANK[activeOrg.role] < ROLE_RANK.admin) {
+  if (!activeOrg || !roleHasPermission(activeOrg.role, "billing.read")) {
     redirect("/403");
   }
   const suporte = emailDeSuporte();

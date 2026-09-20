@@ -11,7 +11,7 @@ import { randomUUID } from "node:crypto";
 import type { NextRequest } from "next/server";
 
 import { ok, fail } from "@/lib/api/wrappers";
-import { requireRole } from "@/lib/auth/require-role";
+import { requirePermission } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isServiceRoleConfigured } from "@/lib/audit";
@@ -37,7 +37,7 @@ interface MemberDto extends MembershipRow {
 export async function GET(_req: NextRequest): Promise<Response> {
   const requestId = randomUUID();
   // spec 13 §4: team read é manager+ (viewer/agent = none; nota 7).
-  const authz = await requireRole("manager", { requestId, resource: "team" });
+  const authz = await requirePermission("users.read", { requestId, resource: "team" });
   if (!authz.ok) return authz.response;
   const { org: activeOrg } = authz;
 
