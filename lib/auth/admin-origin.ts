@@ -1,7 +1,5 @@
 export type AdminOriginDecision =
-  | { kind: "not_admin_surface" }
-  | { kind: "allow" }
-  | { kind: "reject"; status: 404 };
+  { kind: "not_admin_surface" } | { kind: "allow" } | { kind: "reject"; status: 404 };
 
 function hostname(value: string): string | null {
   const trimmed = value.trim();
@@ -11,6 +9,24 @@ function hostname(value: string): string | null {
   } catch {
     return null;
   }
+}
+
+export function isAdminHost(input: { host: string; appUrl: string; adminUrl: string }): boolean {
+  const requestHost = hostname(input.host);
+  const appHost = hostname(input.appUrl);
+  const adminHost = hostname(input.adminUrl);
+
+  return Boolean(
+    requestHost && appHost && adminHost && appHost !== adminHost && requestHost === adminHost,
+  );
+}
+
+export function isExclusiveSuperadminEmail(
+  email: string | null | undefined,
+  allowed: string,
+): boolean {
+  const expected = allowed.trim().toLowerCase();
+  return expected === "" || email?.trim().toLowerCase() === expected;
 }
 
 function isLocalHost(value: string): boolean {

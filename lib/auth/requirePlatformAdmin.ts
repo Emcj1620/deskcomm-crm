@@ -19,6 +19,8 @@
 import { redirect } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
+import { env } from "@/lib/env";
+import { isExclusiveSuperadminEmail } from "@/lib/auth/admin-origin";
 
 export interface PlatformAdminInfo {
   user_id: string;
@@ -39,6 +41,10 @@ export async function requirePlatformAdmin(): Promise<PlatformAdminContext> {
   } = await supabase.auth.getUser();
   if (!user) {
     redirect("/login?next=/admin");
+  }
+
+  if (!isExclusiveSuperadminEmail(user.email, env.SUPERADMIN_EMAIL)) {
+    redirect("/admin/forbidden");
   }
 
   // platform_admins RLS: only platform admins read; non-admins get null → forbid.

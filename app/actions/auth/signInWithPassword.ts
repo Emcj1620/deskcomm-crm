@@ -14,6 +14,8 @@ import {
   registrarFalhaDeLogin,
   AUTH_LIMITS,
 } from "@/lib/auth/rate-limit";
+import { env } from "@/lib/env";
+import { isAdminHost, isExclusiveSuperadminEmail } from "@/lib/auth/admin-origin";
 
 export type SignInResult = {
   ok: false;
@@ -47,6 +49,7 @@ export async function signInWithPassword(input: LoginInput, next?: string): Prom
   const requestId = hdrs.get("x-request-id");
   const ip = hdrs.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
   const userAgent = hdrs.get("user-agent") ?? null;
+  const host = hdrs.get("x-forwarded-host")?.split(",")[0]?.trim() ?? hdrs.get("host") ?? "";
 
   // Antes de falar com o GoTrue: sem isto, tentar senha era de graça e
   // ilimitado (issue #64). Conta por IP e por conta — o ataque distribuído
@@ -63,6 +66,23 @@ export async function signInWithPassword(input: LoginInput, next?: string): Prom
       userAgent,
     });
     return { ok: false, error: "rate_limited" };
+  }
+
+  if (
+    isAdminHost({ host, appUrl: env.NEXT_PUBLIC_APP_URL, adminUrl: env.NEXT_PUBLIC_ADMIN_URL }) &&
+    !isExclusiveSuperadminEmail(parsed.data.email, env.SUPERADMIN_EMAIL)
+  ) {
+    await audit({
+      action: "auth.login_failed",
+      metadata: {
+        email_hash: hashEmail(parsed.data.email),
+        reason: "superadmin_email_not_allowed",
+      },
+      requestId,
+      ip,
+      userAgent,
+    });
+    return { ok: false, error: "invalid_credentials" };
   }
 
   const { data, error } = await supabase.auth.signInWithPassword({

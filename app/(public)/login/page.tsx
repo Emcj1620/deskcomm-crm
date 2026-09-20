@@ -1,10 +1,13 @@
 import Link from "next/link";
+import { headers } from "next/headers";
 
 import { LoginForm } from "@/components/auth/LoginForm";
 import { branding } from "@/lib/branding";
 import { createClient } from "@/lib/supabase/server";
 import { idiomaDoVisitante } from "@/lib/i18n/idiomaAnonimo";
 import { traduzir } from "@/lib/i18n/dicionario";
+import { env } from "@/lib/env";
+import { isAdminHost } from "@/lib/auth/admin-origin";
 
 export const metadata = { title: "Entrar" };
 
@@ -14,6 +17,13 @@ export default async function LoginPage({
   searchParams: Promise<{ next?: string; reset?: string; error?: string }>;
 }) {
   const { next, reset, error } = await searchParams;
+  const hdrs = await headers();
+  const host = hdrs.get("x-forwarded-host")?.split(",")[0]?.trim() ?? hdrs.get("host") ?? "";
+  const adminHost = isAdminHost({
+    host,
+    appUrl: env.NEXT_PUBLIC_APP_URL,
+    adminUrl: env.NEXT_PUBLIC_ADMIN_URL,
+  });
   // Fora da árvore de `app/app/layout.tsx` — sem `IdiomaProvider` do lado do
   // servidor (o cliente já tem o seu, montado em `app/(public)/layout.tsx`).
   // Quase nunca há sessão aqui (é a própria tela de entrar), mas resolve do
@@ -108,15 +118,17 @@ export default async function LoginPage({
             {t("Esqueci minha senha")}
           </Link>
         </p>
-        <p className="text-muted-foreground">
-          {t("Não tem conta?")}{" "}
-          <Link
-            href="/signup"
-            className="font-medium text-foreground underline underline-offset-4"
-          >
-            {t("Criar conta")}
-          </Link>
-        </p>
+        {!adminHost && (
+          <p className="text-muted-foreground">
+            {t("Não tem conta?")}{" "}
+            <Link
+              href="/signup"
+              className="font-medium text-foreground underline underline-offset-4"
+            >
+              {t("Criar conta")}
+            </Link>
+          </p>
+        )}
       </div>
     </div>
   );

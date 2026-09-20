@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { decideAdminOrigin, isAdminPath } from "@/lib/auth/admin-origin";
+import {
+  decideAdminOrigin,
+  isAdminHost,
+  isAdminPath,
+  isExclusiveSuperadminEmail,
+} from "@/lib/auth/admin-origin";
 
 describe("fronteira de host do super-admin", () => {
   const urls = {
@@ -58,5 +63,13 @@ describe("fronteira de host do super-admin", () => {
         adminUrl: "http://localhost:3000",
       }),
     ).toEqual({ kind: "allow" });
+  });
+
+  it("identifica o host exclusivo e compara o proprietário sem diferenciar maiúsculas", () => {
+    expect(isAdminHost({ ...urls, host: "controle.exemplo.com:443" })).toBe(true);
+    expect(isAdminHost({ ...urls, host: "app.exemplo.com" })).toBe(false);
+    expect(isExclusiveSuperadminEmail(" Dono@Exemplo.com ", "dono@exemplo.com")).toBe(true);
+    expect(isExclusiveSuperadminEmail("outro@exemplo.com", "dono@exemplo.com")).toBe(false);
+    expect(isExclusiveSuperadminEmail("qualquer@exemplo.com", "")).toBe(true);
   });
 });

@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
 import { SignupForm } from "@/components/auth/SignupForm";
 import { Button } from "@/components/ui/button";
@@ -8,6 +10,8 @@ import { modoDeCadastro } from "@/lib/auth/politica-de-cadastro";
 import { createClient } from "@/lib/supabase/server";
 import { idiomaDoVisitante } from "@/lib/i18n/idiomaAnonimo";
 import { traduzir } from "@/lib/i18n/dicionario";
+import { env } from "@/lib/env";
+import { isAdminHost } from "@/lib/auth/admin-origin";
 
 export const metadata = { title: "Criar conta" };
 
@@ -39,6 +43,11 @@ export default async function SignupPage({
   searchParams: Promise<{ invite?: string }>;
 }) {
   const { invite } = await searchParams;
+  const hdrs = await headers();
+  const host = hdrs.get("x-forwarded-host")?.split(",")[0]?.trim() ?? hdrs.get("host") ?? "";
+  if (isAdminHost({ host, appUrl: env.NEXT_PUBLIC_APP_URL, adminUrl: env.NEXT_PUBLIC_ADMIN_URL })) {
+    redirect("/login?next=/admin");
+  }
   const payload = invite ? verifyInviteToken(invite) : null;
   const convite = invite && payload ? { token: invite, email: payload.email } : undefined;
   const conviteExpirado = Boolean(invite) && !payload;
