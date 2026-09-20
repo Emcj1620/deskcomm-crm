@@ -37,6 +37,7 @@ const preview = () =>
     context: scenarioContext([]),
     result: newPreviewResult(),
   }) as TurnPreview;
+const assistedPreview = () => ({ ...preview(), kind: 'assisted' as const, contactId: 'contact' });
 const definition = (execute: (args: unknown) => unknown) =>
   tool({
     inputSchema: z.object({ body: z.string().optional() }),
@@ -72,6 +73,26 @@ describe('preview policy shares gates and contains side effects', () => {
     expect(p.result.candidates).toEqual([]);
     expect(p.result.impediments[0]?.code).toBe(evaluateBeforeSend(ctx).veto?.code);
     expect(spy).not.toHaveBeenCalled();
+  });
+  it('prepares an assisted draft outside the delivery window and keeps send revalidation', async () => {
+    const p = assistedPreview();
+    const outsideWindow = {
+      ...gate(),
+      now: new Date('2026-09-07T05:00:00Z'),
+    };
+    expect(evaluateBeforeSend(outsideWindow).veto?.code).toBe('outside_window');
+
+    const tools = applyPreviewPolicy(
+      { send_message: definition(vi.fn()) },
+      p,
+      outsideWindow,
+      () => [],
+    );
+    await execute(tools, 'send_message', { body: 'Rascunho para revisar pela manhã.' });
+
+    expect(p.result.candidates[0]?.body).toBe('Rascunho para revisar pela manhã.');
+    expect(p.result.impediments).toEqual([]);
+    expect(p.result.restrictions).toContain('send_revalidates_live_state');
   });
   it('keeps knowledge reads real and preserves independently generated citations', async () => {
     const read = vi.fn(async () => ({

@@ -7,6 +7,7 @@ import type { PublishedAgentConfig } from './agent-config';
 import type { LeadCheckpointRow } from './inbound-turn';
 import { ferramentasDeAgendaDoAgente, temFerramentaDeAgenda } from './inbound-turn';
 import {
+  BEFORE_SEND_GATES,
   evaluateBeforeSend,
   type GateContext,
   type GateTraceEntry,
@@ -168,12 +169,26 @@ export function applyPreviewPolicy(
                 args && typeof args === 'object' && 'body' in args && typeof args.body === 'string'
                   ? args.body
                   : '';
-              const result = evaluateBeforeSend({
-                ...ctx,
-                ...liveContext?.(),
-                body,
-                semanticPromise: semanticClassifier ? await semanticClassifier(body) : null,
-              });
+              // A sugestão assistida prepara texto para revisão humana; ela não tenta
+              // entregar nada ao canal. Portanto, horário/cap/throttle e a janela de
+              // 24h pertencem ao envio real, que volta a executar a cadeia completa
+              // quando o operador aprova. Os demais gates (opt-out, LGPD, promessas,
+              // vocabulário interno, agenda e disclosure) continuam protegendo o texto.
+              const gates =
+                p.kind === 'assisted'
+                  ? BEFORE_SEND_GATES.filter(
+                      (gate) => gate.name !== 'pacing' && gate.name !== 'messaging_window',
+                    )
+                  : BEFORE_SEND_GATES;
+              const result = evaluateBeforeSend(
+                {
+                  ...ctx,
+                  ...liveContext?.(),
+                  body,
+                  semanticPromise: semanticClassifier ? await semanticClassifier(body) : null,
+                },
+                gates,
+              );
               if (result.veto) {
                 p.result.impediments.push({ code: result.veto.code, message: result.veto.message });
                 return {
