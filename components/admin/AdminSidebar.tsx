@@ -62,12 +62,13 @@ const NAV_ITEMS: NavItem[] = [
 
 interface AdminSidebarProps {
   userEmail: string;
+  appUrl?: string;
   /** "mobile" = conteúdo desta MESMA navegação dentro do drawer que `AdminShell`
    * abre abaixo de `lg` — mesmo padrão de `components/shell/Sidebar.tsx`. */
   variant?: "desktop" | "mobile";
 }
 
-export function AdminSidebar({ userEmail, variant = "desktop" }: AdminSidebarProps) {
+export function AdminSidebar({ userEmail, appUrl = "/app", variant = "desktop" }: AdminSidebarProps) {
   const t = useT();
   const isMobile = variant === "mobile";
   const pathname = usePathname();
@@ -121,7 +122,7 @@ export function AdminSidebar({ userEmail, variant = "desktop" }: AdminSidebarPro
       </nav>
       <div className="space-y-2 border-t p-3">
         <Link
-          href="/app"
+          href={appUrl}
           className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-accent/50 hover:text-foreground"
         >
           <ArrowRight size={14} aria-hidden />

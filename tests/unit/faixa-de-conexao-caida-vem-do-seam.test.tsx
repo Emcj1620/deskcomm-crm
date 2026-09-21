@@ -61,6 +61,7 @@ vi.mock("next/navigation", () => ({
 }));
 vi.mock("next/headers", () => ({
   cookies: async () => ({ get: () => undefined }),
+  headers: async () => new Headers({ host: "localhost:3000" }),
 }));
 vi.mock("@/lib/branding/instalacao", () => ({ marcaDaInstalacao: async () => ({}) }));
 vi.mock("@/lib/branding/organizacao", () => ({

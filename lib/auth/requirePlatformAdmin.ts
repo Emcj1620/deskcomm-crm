@@ -4,7 +4,8 @@
  * Flow:
  *  1. Validate JWT via getUser() (NEVER getSession on backend per CLAUDE.md).
  *  2. Confirm row in platform_admins (active = no revoked_at).
- *  3. Enforce MFA AAL2 if `mfa_required` (default true for platform admins).
+ *  3. Enforce MFA AAL2 for the exclusive SaaS administrator, or when
+ *     `mfa_required` is enabled in shared/self-hosted installations.
  *
  * Redirects:
  *  - no user        → /login?next=/admin
@@ -59,7 +60,10 @@ export async function requirePlatformAdmin(): Promise<PlatformAdminContext> {
     redirect("/admin/forbidden");
   }
 
-  if (paRow.mfa_required) {
+  // Instalação SaaS com proprietário exclusivo nunca permite desligar MFA
+  // por um valor legado na tabela. O cadastro continua acessível em /login/mfa.
+  const mfaRequired = paRow.mfa_required || env.SUPERADMIN_EMAIL.trim() !== "";
+  if (mfaRequired) {
     const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
     if (aalData?.currentLevel !== "aal2") {
       redirect("/login/mfa?next=/admin");
@@ -71,7 +75,7 @@ export async function requirePlatformAdmin(): Promise<PlatformAdminContext> {
     platformAdmin: {
       user_id: paRow.user_id,
       scope: paRow.scope,
-      mfa_required: paRow.mfa_required,
+      mfa_required: mfaRequired,
     },
   };
 }

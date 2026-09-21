@@ -11,6 +11,7 @@ import { useT } from "@/hooks/i18n/useT";
 
 interface AdminShellProps {
   userEmail: string;
+  appUrl?: string;
   children: ReactNode;
 }
 
@@ -55,7 +56,7 @@ interface AdminShellProps {
  * funcionando, em vez de repetir o erro a cada tela adicionada — é o padrão
  * recomendado pelo Radix (Provider perto da raiz, compartilhando o delay).
  */
-export function AdminShell({ userEmail, children }: AdminShellProps) {
+export function AdminShell({ userEmail, appUrl, children }: AdminShellProps) {
   const t = useT();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   // Mesmo padrão de `app/app/_components/AppShell.tsx`: ajuste de estado
@@ -72,11 +73,11 @@ export function AdminShell({ userEmail, children }: AdminShellProps) {
       <div className="flex min-h-screen w-full flex-col bg-background">
         <PlatformModeBanner />
         <div className="flex flex-1">
-          <AdminSidebar userEmail={userEmail} />
+          <AdminSidebar userEmail={userEmail} appUrl={appUrl} />
           <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
             <SheetContent side="left" className="w-72 max-w-[85vw] gap-0 p-0 lg:hidden">
               <SheetTitle className="sr-only">{t("Menu de navegação")}</SheetTitle>
-              <AdminSidebar userEmail={userEmail} variant="mobile" />
+              <AdminSidebar userEmail={userEmail} appUrl={appUrl} variant="mobile" />
             </SheetContent>
           </Sheet>
           <div className="flex min-w-0 flex-1 flex-col">

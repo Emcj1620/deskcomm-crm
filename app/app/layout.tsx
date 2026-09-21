@@ -1,6 +1,8 @@
 import { InterfaceRefresh } from "@/hooks/auth/InterfaceRefresh";
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
+import { isAdminHost } from "@/lib/auth/admin-origin";
+import { requirePlatformAdmin } from "@/lib/auth/requirePlatformAdmin";
 import { isMfaEnrolled, loadAuthUser, requiresMfa, resolveActiveOrg } from "@/lib/auth/server";
 import { DEFAULT_VISIBILITY_MODE, type VisibilityMode } from "@/lib/auth/types";
 import { clientePelaAgendaLigado } from "@/lib/schemas/settings";
@@ -25,6 +27,19 @@ import { acessoFoiRevogado } from "@/lib/auth/vinculo-revogado";
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await loadAuthUser();
   if (!user) redirect("/login");
+
+  const requestHeaders = await headers();
+  if (isAdminHost({
+    host: requestHeaders.get("host") ?? "",
+    appUrl: env.NEXT_PUBLIC_APP_URL,
+    adminUrl: env.NEXT_PUBLIC_ADMIN_URL,
+  })) {
+    // O CRM só abre neste host por uma sessão explícita de suporte resolvida
+    // no banco. Cookie ou membership do administrador não habilitam a entrada.
+    // Sessões encerradas preservam a tela de saída e seus bloqueios existentes.
+    if (!user.support) redirect("/admin");
+    await requirePlatformAdmin();
+  }
 
   let activeOrg = await resolveActiveOrg(user);
 

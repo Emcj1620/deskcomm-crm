@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { requirePlatformAdmin } from "@/lib/auth/requirePlatformAdmin";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { IdiomaProvider } from "@/lib/i18n/IdiomaProvider";
+import { env } from "@/lib/env";
 
 export default async function ProtectedAdminLayout({ children }: { children: ReactNode }) {
   const { user } = await requirePlatformAdmin();
@@ -15,7 +16,7 @@ export default async function ProtectedAdminLayout({ children }: { children: Rea
   const locale = (user.user_metadata?.locale as string | undefined) ?? null;
   return (
     <IdiomaProvider locale={locale}>
-      <AdminShell userEmail={user.email ?? ""}>{children}</AdminShell>
+      <AdminShell userEmail={user.email ?? ""} appUrl={new URL("/app", env.NEXT_PUBLIC_APP_URL).toString()}>{children}</AdminShell>
     </IdiomaProvider>
   );
 }
