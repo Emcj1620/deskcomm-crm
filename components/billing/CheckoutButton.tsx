@@ -18,5 +18,5 @@ export function CheckoutButton({ planCode, cycle, label }: { planCode: string; c
       setBusy(false);
     }
   }
-  return <Button type="button" className="w-full" onClick={start} disabled={busy}>{busy ? "Abrindo…" : label}</Button>;
+  return <Button type="button" className="h-auto min-h-10 w-full min-w-0 whitespace-normal px-3 py-2 text-center text-xs leading-tight sm:text-sm" onClick={start} disabled={busy}>{busy ? "Abrindo…" : label}</Button>;
 }

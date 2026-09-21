@@ -76,7 +76,7 @@ export default async function BillingPage() {
           const atual = subscription?.plan_code === plan.code;
           const economia = plan.monthly_price_cents * 12 - plan.annual_price_cents;
           return (
-            <Card key={plan.code} className={atual ? "border-primary p-6" : "p-6"}>
+            <Card key={plan.code} className={`min-w-0 ${atual ? "border-primary p-6" : "p-6"}`}>
               <div className="flex items-center justify-between gap-2">
                 <h2 className="text-lg font-semibold">{plan.name}</h2>
                 {atual && (
@@ -102,7 +102,7 @@ export default async function BillingPage() {
                 </li>
                 <li>{traduzir("Agentes de IA, respostas sugeridas e follow-ups", idioma)}</li>
               </ul>
-              <div className="mt-6 grid gap-2 sm:grid-cols-2">
+              <div className="mt-6 grid min-w-0 gap-2 sm:grid-cols-2">
                 <CheckoutButton planCode={plan.code} cycle="monthly" label="Assinar mensal" />
                 <CheckoutButton planCode={plan.code} cycle="annual" label="Assinar anual · até 12x" />
               </div>
