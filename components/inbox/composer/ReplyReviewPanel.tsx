@@ -8,6 +8,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { useT } from "@/hooks/i18n/useT";
 import { sugestaoParaMostrar } from "@/lib/agent-engine/agent/sugestao-de-resposta";
+
+// Gerar uma sugestão executa o preview completo do agente (classificadores,
+// guardrails e chamada principal do modelo). Em produção esse fluxo pode passar
+// dos 30s reservados às mutações comuns; abortar o fetch antes não cancela o
+// servidor, apenas mostra um erro falso enquanto a sugestão termina sozinha.
+const DRAFT_GENERATION_TIMEOUT_MS = 120_000;
+
 type Draft = {
   id: string;
   revision: string;
@@ -52,7 +59,11 @@ export function ReplyReviewPanel({
     setNotice(null);
     setBusy(true);
     try {
-      await apiClient.post(`/api/v1/conversations/${conversationId}/draft-reply`, {});
+      await apiClient.post(
+        `/api/v1/conversations/${conversationId}/draft-reply`,
+        {},
+        { timeoutMs: DRAFT_GENERATION_TIMEOUT_MS },
+      );
       await qc.invalidateQueries({ queryKey: key });
     } catch (e) {
       showApiError(e);
