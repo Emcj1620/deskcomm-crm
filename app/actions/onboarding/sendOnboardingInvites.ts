@@ -19,6 +19,7 @@ import { sendEmail } from "@/lib/email/resend";
 import { marcaDaSaida } from "@/lib/branding/saida";
 import { inviteOnboardingSchema } from "@/lib/schemas/onboarding";
 import { requireOnboardingCtx, patchOnboardingState, OnboardingError } from "./_shared";
+import { checkTenantCapacity } from "@/lib/billing/entitlements";
 
 type PapelHumano = "viewer" | "agent" | "manager" | "admin";
 
@@ -31,7 +32,16 @@ export type SendInvitesResult =
        * de aceite é devolvido para o admin enviar manualmente. */
       undelivered?: { email: string; accept_url: string }[];
     }
-  | { ok: false; error: "auth_required" | "no_active_org" | "invalid_input"; details?: unknown };
+  | {
+      ok: false;
+      error:
+        | "auth_required"
+        | "no_active_org"
+        | "invalid_input"
+        | "plan_limit_reached"
+        | "subscription_unavailable";
+      details?: unknown;
+    };
 
 interface InvitePayload {
   // Convite é para PESSOA: só papel humano. `ai_operator` não entra aqui de
@@ -68,6 +78,22 @@ export async function sendOnboardingInvites(payload: InvitePayload): Promise<Sen
       return { ok: false, error: "invalid_input", details: err.flatten() };
     }
     throw err;
+  }
+
+  const capacity = await checkTenantCapacity({
+    organizationId: ctx.orgId,
+    resource: "users",
+    increment: input.invitations.length,
+  });
+  if (!capacity.allowed) {
+    return {
+      ok: false,
+      error:
+        capacity.reason === "plan_limit_reached"
+          ? "plan_limit_reached"
+          : "subscription_unavailable",
+      details: capacity,
+    };
   }
 
   // env.* é runtime → correto na imagem genérica self-host (ver browser.ts).

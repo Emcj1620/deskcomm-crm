@@ -25,6 +25,7 @@ import { ApiError } from "@/lib/api/types";
 import { requirePermission } from "@/lib/auth/permissions";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { inviteMemberSchema, validateRequest } from "@/lib/schemas";
+import { checkTenantCapacity } from "@/lib/billing/entitlements";
 
 export const dynamic = "force-dynamic";
 
@@ -64,6 +65,30 @@ export async function POST(req: NextRequest): Promise<Response> {
 
   const sent: SentItem[] = [];
   const failed: FailedItem[] = [];
+
+  const capacity = await checkTenantCapacity({
+    organizationId: activeOrg.orgId,
+    resource: "users",
+    increment: input.invitations.length,
+  });
+  if (!capacity.allowed) {
+    const status =
+      capacity.reason === "subscription_unavailable"
+        ? 503
+        : capacity.reason === "subscription_inactive"
+          ? 403
+          : 409;
+    return fail(
+      capacity.reason,
+      capacity.reason === "plan_limit_reached"
+        ? `Seu plano permite até ${capacity.limit} usuários. Há ${capacity.remaining} vaga(s) disponível(is).`
+        : capacity.reason === "subscription_inactive"
+          ? "A assinatura desta empresa não permite novos usuários."
+          : "Não foi possível validar os limites do plano agora.",
+      status,
+      { requestId, details: capacity },
+    );
+  }
 
   const admin = isServiceRoleConfigured() ? createAdminClient() : null;
   const inviterName = authUser.full_name ?? authUser.email ?? "Um colega";

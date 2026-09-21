@@ -26,6 +26,7 @@ export const ApiErrorCodes = {
   forbidden: "forbidden",
   forbidden_role: "forbidden_role",
   forbidden_tenant: "forbidden_tenant",
+  subscription_inactive: "subscription_inactive",
   lgpd_anonymization_irreversible: "lgpd_anonymization_irreversible",
 
   // 404
@@ -59,6 +60,7 @@ export const ApiErrorCodes = {
   state_conflict: "state_conflict",
   invalid_state: "invalid_state", // resposta a um agent_case que saiu de awaiting_human (spec 15 §7)
   tenant_already_exists: "tenant_already_exists",
+  plan_limit_reached: "plan_limit_reached",
   // POST /api/v1/contacts com telefone já cadastrado na mesma organização
   // (índice uniq_contacts_org_phone). O corpo traz `details.contact_id` para a
   // tela oferecer o contato existente em vez de só mostrar que deu erro.
@@ -92,6 +94,10 @@ export const ApiErrorCodes = {
 
   // 429
   rate_limited: "rate_limited",
+
+  // 503 — não foi possível resolver o contrato comercial; falha fechada para
+  // não transformar indisponibilidade do billing em uso ilimitado.
+  subscription_unavailable: "subscription_unavailable",
 
   // ─── ANÚNCIOS, eixo de LEITURA (0214) ───
   //

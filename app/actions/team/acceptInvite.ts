@@ -16,6 +16,8 @@ import { redirect } from "next/navigation";
 import { aplicarConvite } from "@/lib/auth/aplicar-convite";
 import { verifyInviteToken } from "@/lib/auth/invite-token";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { checkTenantCapacity } from "@/lib/billing/entitlements";
 
 export type AcceptInviteResult =
   | { ok: true }
@@ -46,6 +48,31 @@ export async function acceptInviteAction(token: string): Promise<AcceptInviteRes
   const inviteEmail = payload.email.trim().toLowerCase();
   if (userEmail !== inviteEmail) {
     return { ok: false, error: "email_mismatch", expectedEmail: payload.email };
+  }
+
+  const admin = createAdminClient();
+  const { data: existingMembership } = await admin
+    .from("user_organizations")
+    .select("id")
+    .eq("organization_id", payload.organization_id)
+    .eq("user_id", user.id)
+    .is("revoked_at", null)
+    .maybeSingle();
+  if (!existingMembership) {
+    const capacity = await checkTenantCapacity({
+      organizationId: payload.organization_id,
+      resource: "users",
+    });
+    if (!capacity.allowed) {
+      return {
+        ok: false,
+        error: "internal_error",
+        message:
+          capacity.reason === "plan_limit_reached"
+            ? `Esta empresa atingiu o limite de ${capacity.limit} usuários do plano.`
+            : "A assinatura desta empresa não permite aceitar o convite agora.",
+      };
+    }
   }
 
   // Org, papel e convidador vêm EXCLUSIVAMENTE do token assinado; usuário do JWT.

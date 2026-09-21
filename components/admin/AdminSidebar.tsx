@@ -16,6 +16,7 @@ import {
   Key,
   WebhooksLogo,
   ArrowRight,
+  Receipt,
 } from "@/lib/ui/icons";
 import type { Icon as PhosphorIcon } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
@@ -34,6 +35,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/admin/dashboard", label: "Dashboard", icon: Gauge },
   { href: "/admin/inbox", label: "Inbox", icon: ChatsCircle },
   { href: "/admin/tenants", label: "Tenants", icon: Buildings },
+  { href: "/admin/plans", label: "Planos", icon: Receipt },
   { href: "/admin/audit", label: "Audit", icon: ClipboardText },
   { href: "/admin/lgpd", label: "LGPD", icon: Scales },
   { href: "/admin/incidents", label: "Incidents", icon: Warning },
@@ -89,7 +91,7 @@ export function AdminSidebar({ userEmail, variant = "desktop" }: AdminSidebarPro
           <SimboloDoProduto nome={marca.name} decorativo className="h-8 w-8" />
         )}
         <div className="flex flex-col">
-          <span className="text-xs uppercase tracking-wider text-muted-foreground">
+          <span className="text-xs tracking-wider text-muted-foreground uppercase">
             {marca.name}
           </span>
           <span className="text-sm font-semibold tracking-tight">{t("Admin Plataforma")}</span>
@@ -97,8 +99,7 @@ export function AdminSidebar({ userEmail, variant = "desktop" }: AdminSidebarPro
       </div>
       <nav className="flex-1 space-y-1 overflow-y-auto p-2" aria-label={t("Navegação plataforma")}>
         {NAV_ITEMS.map((item) => {
-          const isActive =
-            pathname === item.href || pathname.startsWith(item.href + "/");
+          const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
           const Icon = item.icon;
           return (
             <Link
