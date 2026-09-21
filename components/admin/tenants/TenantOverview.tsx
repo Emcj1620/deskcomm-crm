@@ -56,9 +56,9 @@ export const NUVEMSHOP_VARIANT: Record<string, "success" | "warning" | "error" |
 
 function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="flex items-start justify-between gap-4 py-2 border-b last:border-0">
-      <span className="text-sm text-muted-foreground whitespace-nowrap">{label}</span>
-      <span className="text-sm font-medium text-right">{value ?? "—"}</span>
+    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-start gap-4 py-2 border-b last:border-0">
+      <span className="min-w-0 text-sm text-muted-foreground [overflow-wrap:anywhere]">{label}</span>
+      <span className="min-w-0 text-sm font-medium text-right [overflow-wrap:anywhere]">{value ?? "—"}</span>
     </div>
   );
 }
@@ -67,7 +67,7 @@ function StatCard({ label, value, warning }: { label: string; value: number; war
   const t = useT();
   return (
     <div className={[
-      "rounded-lg border p-4 flex flex-col gap-1",
+      "min-w-0 rounded-lg border p-4 flex flex-col gap-1 [overflow-wrap:anywhere]",
       warning && value > 0 ? "border-amber-300 bg-amber-50/50 dark:border-amber-700 dark:bg-amber-950/20" : "bg-card",
     ].join(" ")}>
       <span className="text-2xl font-bold tabular-nums">{value.toLocaleString("pt-BR")}</span>

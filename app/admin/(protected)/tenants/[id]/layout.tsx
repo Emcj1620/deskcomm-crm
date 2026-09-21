@@ -73,7 +73,7 @@ export default async function TenantDetailLayout({ children, params }: TenantLay
   const basePath = `/admin/tenants/${id}`;
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       {/* Back nav */}
       <Link
         href="/admin/tenants"
@@ -85,10 +85,10 @@ export default async function TenantDetailLayout({ children, params }: TenantLay
 
       {/* Header */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-semibold tracking-tight">{org?.display_name ?? id}</h1>
+        <div className="flex min-w-0 flex-wrap items-center gap-3">
+          <h1 className="min-w-0 text-2xl font-semibold tracking-tight [overflow-wrap:anywhere]">{org?.display_name ?? id}</h1>
           {org?.slug && (
-            <code className="rounded-md bg-muted px-2 py-0.5 font-mono text-xs text-muted-foreground">
+            <code className="min-w-0 max-w-full rounded-md bg-muted px-2 py-0.5 font-mono text-xs text-muted-foreground [overflow-wrap:anywhere]">
               {org.slug}
             </code>
           )}

@@ -71,7 +71,7 @@ export function AdminShell({ userEmail, appUrl, children }: AdminShellProps) {
   return (
     <TooltipProvider>
       <div className="flex min-h-screen w-full flex-col bg-background">
-        <PlatformModeBanner />
+        <PlatformModeBanner appUrl={appUrl} />
         <div className="flex flex-1">
           <AdminSidebar userEmail={userEmail} appUrl={appUrl} />
           <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>

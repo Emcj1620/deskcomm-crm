@@ -1,5 +1,9 @@
 # Migration Manifest — DeskcommCRM
 
+## 2026-09-21 — Zapprofit
+
+- `20260921143926_tenant_internal_tables_rls`: restaura RLS das sete tabelas internas de agentes, notas e follow-ups, revoga acesso anônimo e exige vínculo de organização, MFA quando cadastrado e papel mínimo para escrita. Testes transacionais: 21 verificações.
+
 Migrations applied to Supabase project `rrydmwnporysaiysiztn` (sa-east-1, Postgres 17) via Supabase MCP on 2026-04-28.
 
 ## Nota — renomeação de 4 prefixos em 2026-08-05 (issue #143)
@@ -46,6 +50,7 @@ aplica.
 | Version | Name | Description |
 |---|---|---|
 | `20260920172642` | `saas_plans_subscriptions` | Catálogo Essencial/Profissional/Business, assinatura por tenant, trial padrão para novas organizações, preservação de tenants anteriores no Business e RLS de leitura sem escrita pública. |
+| `20260921142216` | `saas_custom_plans_catalog` | Códigos personalizados, visibilidade pública/privada, revisão otimista e histórico atômico de edição via RPC exclusiva do backend. Confirma limites de planos com assinaturas; não altera cobranças nem vínculos. Baseline preserva valores comerciais já editados. |
 | `20260428195354` | `0001_platform_base` | organizations, user_organizations, platform_admins, api_tokens, api_audit_log, user_recovery_codes, idempotency_keys + RLS helpers (fn_user_org_ids, fn_is_platform_admin, fn_user_role_in_org, fn_role_at_least) |
 | `20260428195513` | `0002_event_log_and_compat` | event_log + emit_event/fn_log_event helpers + compat aliases (fn_set_updated_at, fn_user_role_in returning int) |
 | `20260428195708` | `0003_customer_360` | contacts (CPF encrypted), crm_pipelines, crm_stages, crm_leads, crm_lead_activities, crm_lead_links, merge_queue + 5 domain triggers |

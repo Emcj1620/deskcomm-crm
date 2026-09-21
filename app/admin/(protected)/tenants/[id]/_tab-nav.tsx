@@ -20,7 +20,7 @@ export function TabNav({ basePath, tabs }: TabNavProps) {
   const pathname = usePathname();
 
   return (
-    <div className="flex gap-0 border-b">
+    <div className="flex min-w-0 flex-wrap gap-0 border-b">
       {tabs.map((tab) => {
         const href = basePath + tab.href;
         // Overview matches exactly; others match as prefix

@@ -68,23 +68,23 @@ export function HealthCard({
   return (
     <div
       className={[
-        "rounded-xl border-2 bg-card p-5 flex flex-col gap-4 transition-colors",
+        "min-w-0 rounded-xl border-2 bg-card p-5 flex flex-col gap-4 transition-colors",
         STATUS_BORDER[status],
       ].join(" ")}
     >
       {/* Header row */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-muted-foreground">
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2 text-muted-foreground">
           <span className="w-5 h-5 shrink-0" aria-hidden>
             {icon}
           </span>
-          <span className="text-xs font-semibold uppercase tracking-wider leading-none">
+          <span className="min-w-0 text-xs font-semibold uppercase tracking-wider leading-snug [overflow-wrap:anywhere]">
             {title}
           </span>
         </div>
 
         {/* Status badge + pulse */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex shrink-0 items-center gap-1.5">
           {isCritical && (
             <span className="relative flex h-2 w-2" aria-hidden>
               <span
@@ -113,22 +113,22 @@ export function HealthCard({
       </div>
 
       {/* Primary value */}
-      <div className="text-2xl font-bold tracking-tight leading-none">
+      <div className="min-w-0 text-2xl font-bold tracking-tight leading-snug [overflow-wrap:anywhere]">
         {primaryValue}
       </div>
 
       {/* Details */}
       {details && details.length > 0 && (
-        <div className="space-y-1.5 border-t pt-3">
+        <div className="min-w-0 space-y-2 border-t pt-3">
           {details.map((d) => (
             <div
               key={d.label}
-              className="flex items-baseline justify-between gap-3 text-sm"
+              className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-baseline gap-3 text-sm"
             >
-              <span className="text-muted-foreground text-xs whitespace-nowrap">
+              <span title={d.label} className="min-w-0 text-muted-foreground text-xs [overflow-wrap:anywhere]">
                 {d.label}
               </span>
-              <span className="font-medium text-right text-xs">{d.value}</span>
+              <span className="min-w-0 font-medium text-right text-xs [overflow-wrap:anywhere]">{d.value}</span>
             </div>
           ))}
         </div>
