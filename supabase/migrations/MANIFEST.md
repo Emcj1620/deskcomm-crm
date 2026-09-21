@@ -1,5 +1,7 @@
 # Migration Manifest — DeskcommCRM
 
+- `20260921232743_asaas_checkout_sessions`: registra checkouts Asaas vinculados à empresa/plano e eventos idempotentes; acesso apenas service-role.
+
 ## 2026-09-21 — Zapprofit
 
 - `20260921143926_tenant_internal_tables_rls`: restaura RLS das sete tabelas internas de agentes, notas e follow-ups, revoga acesso anônimo e exige vínculo de organização, MFA quando cadastrado e papel mínimo para escrita. Testes transacionais: 21 verificações.

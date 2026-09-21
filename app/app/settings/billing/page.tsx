@@ -6,6 +6,7 @@ import { emailDeSuporte } from "@/lib/branding/saida";
 import { Card } from "@/components/ui/card";
 import { traduzir } from "@/lib/i18n/dicionario";
 import { createClient } from "@/lib/supabase/server";
+import { CheckoutButton } from "@/components/billing/CheckoutButton";
 
 export const dynamic = "force-dynamic";
 
@@ -40,7 +41,7 @@ export default async function BillingPage() {
   return (
     <div className="flex h-full flex-col gap-6 p-6">
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight">Billing</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Minha assinatura</h1>
         <p className="text-sm text-muted-foreground">
           {traduzir("Planos, faturas e cobrança.", idioma)}
         </p>
@@ -101,6 +102,10 @@ export default async function BillingPage() {
                 </li>
                 <li>{traduzir("Agentes de IA, respostas sugeridas e follow-ups", idioma)}</li>
               </ul>
+              <div className="mt-6 grid gap-2 sm:grid-cols-2">
+                <CheckoutButton planCode={plan.code} cycle="monthly" label="Assinar mensal" />
+                <CheckoutButton planCode={plan.code} cycle="annual" label="Assinar anual · até 12x" />
+              </div>
             </Card>
           );
         })}
@@ -110,7 +115,7 @@ export default async function BillingPage() {
         <h2 className="text-sm font-semibold">{traduzir("Cobrança", idioma)}</h2>
         <p className="mt-2 text-sm text-muted-foreground">
           {traduzir(
-            "A troca de plano e o checkout serão habilitados na integração com o Asaas.",
+            "Escolha um plano para abrir o checkout seguro do Asaas. No mensal, você pode pagar por Pix ou cartão; no anual, cartão em até 12x com os juros exibidos pelo Asaas.",
             idioma,
           )}{" "}
           {suporte ? (

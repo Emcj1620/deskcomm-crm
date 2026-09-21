@@ -668,7 +668,7 @@ export const NAV_CATALOG = [
   },
   {
     href: "/app/settings/billing",
-    label: "Billing",
+    label: "Minha assinatura",
     description: "Plano e cobrança.",
     icon: "Receipt",
     group: "organizacao",

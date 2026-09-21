@@ -329,6 +329,9 @@ const schema = z.object({
   // App URLs
   NEXT_PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
   NEXT_PUBLIC_ADMIN_URL: z.string().url().default("http://localhost:3000"),
+  ASAAS_API_KEY: z.string().optional().default(""),
+  ASAAS_API_URL: z.string().url().optional().default("https://api.asaas.com/v3"),
+  ASAAS_WEBHOOK_TOKEN: z.string().min(16).optional().default(""),
   // Instalações com um único Super Admin podem fixar o e-mail proprietário.
   // Server-only: nunca deve ser exposto no bundle público.
   SUPERADMIN_EMAIL: z.string().email().optional().or(z.literal("")).default(""),
