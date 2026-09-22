@@ -64,6 +64,25 @@ it("não ativa assinatura porque o QR Code foi gerado", async () => {
   expect(result.pix?.payload).toBe("TEST");
   expect(mocks.rpc).not.toHaveBeenCalled();
 });
+it.each([1, 2, 6, 12])("concilia cartão confirmado em %i parcelas sem gerar Pix", async (count) => {
+  const cardIntent = { ...intent, payment_method: "CREDIT_CARD" as const, installments: count, total_cents: 83272 };
+  const regular = Math.floor(cardIntent.total_cents / count);
+  const payments = Array.from({ length: count }, (_, index) => ({ ...payment,
+    id: index === 0 ? "pay_test" : `pay_part${index}`, billingType: "CREDIT_CARD", status: "CONFIRMED",
+    value: (index === count - 1 ? cardIntent.total_cents - regular * (count - 1) : regular) / 100,
+    installment: count > 1 ? "inst_test" : null, installmentNumber: count > 1 ? index + 1 : null,
+  }));
+  mocks.request.mockResolvedValueOnce(payments[0]);
+  if (count > 1) mocks.request.mockResolvedValueOnce({ data: payments, hasMore: false });
+  expect((await reconcilePayment(cardIntent)).status).toBe("paid");
+  expect(mocks.rpc).toHaveBeenCalledTimes(1);
+  expect(mocks.request).toHaveBeenCalledTimes(count > 1 ? 2 : 1);
+});
+it("não confirma cartão em análise de risco", async () => {
+  mocks.request.mockResolvedValue({ ...payment, billingType: "CREDIT_CARD", status: "AWAITING_RISK_ANALYSIS" });
+  expect((await reconcilePayment({ ...intent, payment_method: "CREDIT_CARD" })).status).toBe("pending");
+  expect(mocks.rpc).not.toHaveBeenCalled();
+});
 it("timeout sem resultado permanece incerto e não cria novo pagamento", async () => {
   mocks.request.mockResolvedValue({ data: [], hasMore: false });
   expect((await reconcilePayment({ ...intent, provider_payment_id: null, status: "uncertain" })).status).toBe("uncertain");

@@ -41,6 +41,25 @@ it("não expõe HTML nem usa alert quando a API falha", async () => {
   expect(alert).not.toHaveBeenCalled();
   expect(fetchMock).toHaveBeenCalledTimes(1);
 });
+it("habilita cartão, limita a 12x e mostra acréscimo antes de confirmar", async () => {
+  const cardQuote = { ...quote, payment_method: "CREDIT_CARD", installments: 12, total_cents: 8373, surcharge_cents: 383, installment_cents: 697, last_installment_cents: 706 };
+  const fetchMock = vi.fn().mockResolvedValueOnce(response({ data: { payment: null, card_enabled: true } })).mockResolvedValueOnce(response({ data: cardQuote }));
+  vi.stubGlobal("fetch", fetchMock);
+  render(<CheckoutButton planCode="essential" cycle="monthly" label="Assinar" />);
+  fireEvent.click(screen.getByRole("button", { name: "Assinar" }));
+  await screen.findByRole("button", { name: "Ver valores e continuar" });
+  fireEvent.click(screen.getByRole("button", { name: "Cartão" }));
+  const select = screen.getByRole("combobox", { name: "Parcelas" });
+  expect(select.querySelectorAll("option")).toHaveLength(12);
+  fireEvent.change(select, { target: { value: "12" } });
+  fireEvent.click(screen.getByRole("button", { name: "Ver valores e continuar" }));
+  await screen.findByRole("button", { name: /Confirmar pagamento/ });
+  expect(screen.getByText("Acréscimo do cartão")).toBeTruthy();
+  expect(screen.getByLabelText("Número do cartão")).toBeTruthy();
+  expect(screen.getByLabelText("Código de segurança")).toBeTruthy();
+  expect(fetchMock).toHaveBeenCalledTimes(2);
+  expect(JSON.parse(fetchMock.mock.calls[1]?.[1].body)).toMatchObject({ payment_method: "CREDIT_CARD", installments: 12 });
+});
 
 it("retoma Pix pendente em vez de gerar outra cobrança", async () => {
   const payment = { id: quote.id, status: "pending", total_cents: 7990, payment_method: "PIX", pix: { encoded_image: "YWJj", payload: "PIX-TEST-ONLY", expiration_date: "2099-01-01" } };
