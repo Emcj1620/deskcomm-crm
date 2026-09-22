@@ -9,7 +9,7 @@ import { ok, fail } from "@/lib/api/wrappers";
 
 const input = z.object({ plan_code: z.string().min(2).max(64), billing_cycle: z.enum(["monthly", "annual"]) });
 
-export async function POST(req: Request) {
+async function handlePost(req: Request) {
   const requestId = randomUUID();
   const auth = await requireRole("admin", { requestId });
   if (!auth.ok) return auth.response;
@@ -41,4 +41,13 @@ export async function POST(req: Request) {
   };
   try { const checkout = await createAsaasCheckout(body); await admin.from("asaas_checkout_sessions").update({ provider_checkout_id: checkout.id }).eq("id", session.id); return ok(checkout, { requestId }); }
   catch { return fail("checkout_unavailable", "Não foi possível abrir o checkout agora.", 503, { requestId }); }
+}
+
+export async function POST(req: Request) {
+  try {
+    return await handlePost(req);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "checkout_internal_error";
+    return fail("checkout_internal_error", message, 500);
+  }
 }
