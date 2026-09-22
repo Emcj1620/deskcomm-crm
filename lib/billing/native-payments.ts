@@ -39,7 +39,17 @@ export async function reconcilePayment(intent: PaymentIntent): Promise<PaymentSt
     payment = list.data.find((p) => intent.installments === 1 || p.installmentNumber === 1);
     if (!payment) throw new Error("payment_mismatch");
   }
-  if (payment.externalReference !== intent.id || payment.billingType !== intent.payment_method || payment.customer !== intent.provider_customer_id) {
+  // Manual receipt may preserve PIX and change status, or use the cash billing type.
+  // Accept only a settled single charge; never settle a whole installment plan
+  // because only one of its installments was manually marked as received.
+  const settled = ["CONFIRMED", "RECEIVED", "RECEIVED_IN_CASH"].includes(payment.status);
+  const manualReceipt = intent.installments === 1 && settled &&
+    (payment.status === "RECEIVED_IN_CASH" || payment.billingType === "RECEIVED_IN_CASH");
+  const methodMatches = payment.billingType === intent.payment_method ||
+    (manualReceipt && payment.billingType === "RECEIVED_IN_CASH");
+  if ((intent.provider_payment_id && payment.id !== intent.provider_payment_id) ||
+      payment.externalReference !== intent.id || !methodMatches || payment.customer !== intent.provider_customer_id ||
+      (payment.status === "RECEIVED_IN_CASH" && !manualReceipt)) {
     throw new Error("payment_mismatch");
   }
   let total = Math.round(payment.value * 100);
@@ -53,7 +63,7 @@ export async function reconcilePayment(intent: PaymentIntent): Promise<PaymentSt
   }
   if (total !== intent.total_cents) throw new Error("payment_amount_mismatch");
   await updatePaymentIntent(intent, { provider_payment_id: payment.id, provider_installment_id: payment.installment ?? null });
-  if (["CONFIRMED", "RECEIVED"].includes(payment.status) && !payment.deleted) {
+  if (settled && !payment.deleted) {
     const { error } = await createAdminClient().rpc("fn_settle_billing_payment", { p_intent: intent.id, p_org: intent.organization_id, p_payment: payment.id });
     if (error) throw new Error("payment_settlement_pending");
     result.status = "paid";

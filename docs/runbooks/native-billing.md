@@ -4,6 +4,8 @@ Implementação local: popup em Minha assinatura → cotação server-side → c
 
 ## Limites deliberados
 
+- Baixa manual de cobrança única é reconhecida após consulta autenticada ao Asaas (`status=RECEIVED_IN_CASH`, ou tipo `RECEIVED_IN_CASH` com status liquidado). ID, referência, cliente e total continuam obrigatórios. Não solicita QR após a baixa. Uma parcela baixada manualmente não liquida automaticamente o parcelamento inteiro. Desfazer baixa já liquidada exige análise administrativa, assim como estorno.
+
 - Cartão fica desativado por padrão (`ASAAS_NATIVE_CARD_ENABLED=false`). Ativar somente após homologação com chave sandbox e revisão dos controles PCI-DSS, HTTPS, IP encaminhado pelo proxy e ausência de dados de cartão em telemetria/APM. A integração direta recebe dados de cartão no servidor; não é tokenização client-side nem uma certificação PCI.
 - Não há débito recorrente: cada pagamento compra um período mensal/anual. Pix é à vista; cartão oferece de 1 a 12 parcelas. A taxa de recebimento é consultada na conta, calculada para repasse e confrontada com o simulador. Não inclui antecipação.
 - A renovação do mesmo plano preserva dias pagos. Troca de plano ativo depende da regra comercial do operador; até ela ser definida, a API recusa a troca antes de criar cobrança.

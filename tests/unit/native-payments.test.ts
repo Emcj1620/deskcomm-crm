@@ -21,6 +21,30 @@ beforeEach(() => {
 it("aceita parcela nula retornada pelo Asaas em cobrança à vista", () => {
   expect(providerPaymentSchema.safeParse({ ...payment, installmentNumber: null }).success).toBe(true);
 });
+it.each([
+  { billingType: "PIX", status: "RECEIVED_IN_CASH" },
+  { billingType: "RECEIVED_IN_CASH", status: "RECEIVED" },
+])("reconhece baixa manual confirmada pelo Asaas: %j", async (manual) => {
+  mocks.request.mockResolvedValue({ ...payment, ...manual });
+  expect((await reconcilePayment(intent)).status).toBe("paid");
+  expect(mocks.rpc).toHaveBeenCalledTimes(1);
+  expect(mocks.request).toHaveBeenCalledTimes(1); // no QR request after manual receipt
+});
+it.each([{ value: 1 }, { customer: "cus_other" }, { externalReference: "other" }, { id: "pay_other" }])("baixa manual não dispensa vínculo e valor: %j", async (change) => {
+  mocks.request.mockResolvedValue({ ...payment, status: "RECEIVED_IN_CASH", ...change });
+  await expect(reconcilePayment(intent)).rejects.toThrow();
+  expect(mocks.rpc).not.toHaveBeenCalled();
+});
+it("não aceita tipo dinheiro sem confirmação de recebimento", async () => {
+  mocks.request.mockResolvedValue({ ...payment, billingType: "RECEIVED_IN_CASH", status: "PENDING" });
+  await expect(reconcilePayment(intent)).rejects.toThrow();
+  expect(mocks.rpc).not.toHaveBeenCalled();
+});
+it("não liquida parcelamento inteiro pela baixa manual de uma parcela", async () => {
+  mocks.request.mockResolvedValue({ ...payment, billingType: "CREDIT_CARD", status: "RECEIVED_IN_CASH" });
+  await expect(reconcilePayment({ ...intent, payment_method: "CREDIT_CARD", installments: 12 })).rejects.toThrow();
+  expect(mocks.rpc).not.toHaveBeenCalled();
+});
 it("só concede assinatura após consultar pagamento confirmado no provedor", async () => {
   mocks.request.mockResolvedValue(payment);
   expect((await reconcilePayment(intent)).status).toBe("paid");
