@@ -28,13 +28,13 @@ async function handlePost(req: Request) {
   if (sessionError || !session) return fail("checkout_unavailable", "Não foi possível preparar o checkout.", 503, { requestId });
   const body = {
     // O Asaas não parcela Pix: anual usa cartão em até 12x; mensal aceita Pix
-    // ou cartão como recorrência.
+    // ou cartão como cobrança avulsa.
     billingTypes: annual ? ["CREDIT_CARD"] : ["PIX", "CREDIT_CARD"],
     // O Asaas não permite PIX em uma cobrança RECURRENT. O mensal usa uma
     // cobrança avulsa com os dois meios; a renovação será iniciada pelo botão
     // da assinatura, enquanto o anual usa parcelamento no cartão.
-    chargeTypes: [annual ? "INSTALLMENT" : "DETACHED"],
-    items: [{ name: plan.name, quantity: 1, value: cents / 100 }],
+    chargeTypes: annual ? ["DETACHED", "INSTALLMENT"] : ["DETACHED"],
+    items: [{ name: plan.name.slice(0, 30), quantity: 1, value: cents / 100 }],
     externalReference: session.id,
     callback: { successUrl: `${appUrl}/app/settings/billing?checkout=success`, cancelUrl: `${appUrl}/app/settings/billing?checkout=canceled`, expiredUrl: `${appUrl}/app/settings/billing?checkout=expired` },
     ...(annual ? { installment: { maxInstallmentCount: 12 } } : {}),
