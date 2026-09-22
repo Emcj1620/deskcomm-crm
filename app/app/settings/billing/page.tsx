@@ -115,7 +115,7 @@ export default async function BillingPage() {
         <h2 className="text-sm font-semibold">{traduzir("Cobrança", idioma)}</h2>
         <p className="mt-2 text-sm text-muted-foreground">
           {traduzir(
-            "Escolha um plano para abrir o checkout seguro do Asaas. No mensal, você pode pagar por Pix ou cartão; no anual, cartão em até 12x com os juros exibidos pelo Asaas.",
+            "Escolha um plano para abrir o checkout seguro do Asaas. O mensal aceita Pix ou cartão e pode ser renovado por aqui; o anual aceita cartão em até 12x com os juros exibidos pelo Asaas.",
             idioma,
           )}{" "}
           {suporte ? (

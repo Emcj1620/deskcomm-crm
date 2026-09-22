@@ -10,9 +10,9 @@ function validToken(value: string | null) {
 
 export async function POST(request: Request) {
   if (!validToken(request.headers.get("asaas-access-token"))) return new Response("unauthorized", { status: 401 });
-  const body = await request.json().catch(() => null) as { id?: string; event?: string; payment?: { externalReference?: string }; subscription?: { externalReference?: string; id?: string } } | null;
+  const body = await request.json().catch(() => null) as { id?: string; event?: string; checkout?: { externalReference?: string }; payment?: { externalReference?: string }; subscription?: { externalReference?: string; id?: string } } | null;
   if (!body?.id || !body.event) return new Response("invalid_payload", { status: 400 });
-  const checkoutId = body.subscription?.externalReference ?? body.payment?.externalReference;
+  const checkoutId = body.checkout?.externalReference ?? body.subscription?.externalReference ?? body.payment?.externalReference;
   if (!checkoutId) return Response.json({ received: true });
   const admin = createAdminClient();
   const { data: checkout } = await admin.from("asaas_checkout_sessions").select("id,organization_id,plan_code,billing_cycle,status").eq("id", checkoutId).maybeSingle();
