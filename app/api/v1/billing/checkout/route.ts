@@ -46,8 +46,7 @@ async function handlePost(req: Request) {
 export async function POST(req: Request) {
   try {
     return await handlePost(req);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "checkout_internal_error";
-    return fail("checkout_internal_error", message, 500);
+  } catch {
+    return fail("checkout_internal_error", "Não foi possível preparar o checkout. Tente novamente em instantes.", 500);
   }
 }
