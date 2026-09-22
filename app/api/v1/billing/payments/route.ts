@@ -10,6 +10,7 @@ import { env } from "@/lib/env";
 import { authRateLimited } from "@/lib/auth/rate-limit";
 import { getPaymentIntent, reconcilePayment, updatePaymentIntent, type PaymentIntent } from "@/lib/billing/native-payments";
 import { paymentRequest, PaymentProviderError, providerPaymentSchema } from "@/lib/billing/asaas-payments";
+import { checkoutSelection } from "@/lib/billing/payment-quote";
 
 const digits = (min: number, max: number) => z.string().transform((s) => s.replace(/[ .\-/()+]/g, "")).pipe(z.string().regex(/^\d+$/).min(min).max(max));
 const payerSchema = z.object({ name: z.string().trim().min(3).max(120), email: z.email().max(180), cpf_cnpj: digits(11, 14).refine((s) => s.length === 11 || s.length === 14), phone: digits(10, 11), postal_code: digits(8, 8), address_number: z.string().trim().min(1).max(20) });
@@ -60,6 +61,7 @@ export async function POST(request: Request) {
     const intent = await getPaymentIntent(parsed.data.intent_id, auth.org.orgId);
     if (!intent || intent.created_by !== auth.user.id) return fail("not_found", "Cotação não encontrada.", 404, { requestId });
     if (intent.status !== "quoted") return ok(await reconcilePayment(intent), { requestId });
+    if (!checkoutSelection.safeParse(intent).success) return fail("validation_error", "O plano mensal permite apenas 1x. Recalcule o pagamento.", 422, { requestId });
     if (new Date(intent.expires_at).getTime() <= Date.now()) return fail("quote_expired", "A cotação expirou. Recalcule antes de pagar.", 409, { requestId });
     if (intent.payment_method === "CREDIT_CARD" && (!env.ASAAS_NATIVE_CARD_ENABLED || !card)) return fail("card_unavailable", "Pagamento por cartão ainda está em validação. Escolha Pix.", 409, { requestId });
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? request.headers.get("x-real-ip") ?? "";

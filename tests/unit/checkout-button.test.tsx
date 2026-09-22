@@ -48,11 +48,11 @@ it("não expõe HTML nem usa alert quando a API falha", async () => {
   expect(alert).not.toHaveBeenCalled();
   expect(fetchMock).toHaveBeenCalledTimes(1);
 });
-it("habilita cartão, limita a 12x e mostra acréscimo antes de confirmar", async () => {
-  const cardQuote = { ...quote, payment_method: "CREDIT_CARD", installments: 12, total_cents: 8373, surcharge_cents: 383, installment_cents: 697, last_installment_cents: 706 };
+it("habilita cartão anual, limita a 12x e mostra acréscimo antes de confirmar", async () => {
+  const cardQuote = { ...quote, billing_cycle: "annual", payment_method: "CREDIT_CARD", installments: 12, total_cents: 8373, surcharge_cents: 383, installment_cents: 697, last_installment_cents: 706 };
   const fetchMock = vi.fn().mockResolvedValueOnce(response({ data: { payment: null, card_enabled: true } })).mockResolvedValueOnce(response({ data: cardQuote }));
   vi.stubGlobal("fetch", fetchMock);
-  render(<CheckoutButton planCode="essential" cycle="monthly" label="Assinar" />);
+  render(<CheckoutButton planCode="essential" cycle="annual" label="Assinar" />);
   fireEvent.click(screen.getByRole("button", { name: "Assinar" }));
   await waitFor(() => expect(screen.getByRole("button", { name: "Cartão" }).hasAttribute("disabled")).toBe(false));
   fireEvent.click(screen.getByRole("button", { name: "Cartão" }));
@@ -67,6 +67,17 @@ it("habilita cartão, limita a 12x e mostra acréscimo antes de confirmar", asyn
   expect(screen.getByLabelText("Código de segurança")).toBeTruthy();
   expect(fetchMock).toHaveBeenCalledTimes(2);
   expect(JSON.parse(fetchMock.mock.calls[1]?.[1].body)).toMatchObject({ payment_method: "CREDIT_CARD", installments: 12 });
+});
+
+it("oferece somente 1x no cartão mensal", async () => {
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(response({ data: { payment: null, card_enabled: true } })));
+  render(<CheckoutButton planCode="essential" cycle="monthly" label="Assinar" />);
+  fireEvent.click(screen.getByRole("button", { name: "Assinar" }));
+  await waitFor(() => expect(screen.getByRole("button", { name: "Cartão" }).hasAttribute("disabled")).toBe(false));
+  fireEvent.click(screen.getByRole("button", { name: "Cartão" }));
+  const select = screen.getByRole("combobox", { name: "Parcelas" }) as HTMLSelectElement;
+  expect(select.options).toHaveLength(1);
+  expect(select.value).toBe("1");
 });
 
 it("retoma Pix pendente em vez de gerar outra cobrança", async () => {

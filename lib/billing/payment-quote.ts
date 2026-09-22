@@ -5,7 +5,8 @@ export const checkoutSelection = z.object({
   billing_cycle: z.enum(["monthly", "annual"]),
   payment_method: z.enum(["PIX", "CREDIT_CARD"]),
   installments: z.number().int().min(1).max(12),
-}).refine((v) => v.payment_method !== "PIX" || v.installments === 1, "Pix é à vista.");
+}).refine((v) => v.payment_method !== "PIX" || v.installments === 1, "Pix é à vista.")
+  .refine((v) => v.billing_cycle !== "monthly" || v.installments === 1, "O plano mensal permite apenas 1x.");
 
 export const cardFeesSchema = z.object({
   operationValue: z.number().nonnegative(),

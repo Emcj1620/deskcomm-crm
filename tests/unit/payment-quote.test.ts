@@ -3,6 +3,15 @@ import { cardTotal, checkoutSelection, installmentAmounts } from "@/lib/billing/
 
 const fees = { operationValue: 0.49, oneInstallmentPercentage: 2.99, upToSixInstallmentsPercentage: 3.49, upToTwelveInstallmentsPercentage: 3.99, hasValidDiscount: false };
 describe("cotação de pagamento", () => {
+  it.each([2, 6, 12])("recusa plano mensal em %s parcelas", (installments) => {
+    expect(checkoutSelection.safeParse({ plan_code: "essential", billing_cycle: "monthly", payment_method: "CREDIT_CARD", installments }).success).toBe(false);
+  });
+  it.each(["monthly", "annual"])("aceita %s em 1x", (billing_cycle) => {
+    expect(checkoutSelection.safeParse({ plan_code: "essential", billing_cycle, payment_method: "CREDIT_CARD", installments: 1 }).success).toBe(true);
+  });
+  it("mantém anual em 12x", () => {
+    expect(checkoutSelection.safeParse({ plan_code: "essential", billing_cycle: "annual", payment_method: "CREDIT_CARD", installments: 12 }).success).toBe(true);
+  });
   it.each([1, 2, 6, 7, 12])("repassa a taxa única e percentual em %s parcelas", (count) => {
     const result = cardTotal(79900, count, fees);
     const net = result.total_cents * (1 - result.fee_percentage / 100) - 49;
