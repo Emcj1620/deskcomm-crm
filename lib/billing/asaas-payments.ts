@@ -26,7 +26,7 @@ export const providerPaymentSchema = z.object({
   id: z.string().regex(/^pay_[a-zA-Z0-9]+$/), customer: z.string(),
   status: z.string(), value: z.number(), billingType: z.string(),
   externalReference: z.string().nullable().optional(), installment: z.string().nullable().optional(),
-  installmentNumber: z.number().optional(), deleted: z.boolean().optional(),
+  installmentNumber: z.number().nullable().optional(), deleted: z.boolean().optional(),
 });
 
 export const paymentListSchema = z.object({ data: z.array(providerPaymentSchema), hasMore: z.boolean() });

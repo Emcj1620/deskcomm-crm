@@ -5,6 +5,7 @@ vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: () => ({ from: mocks
 vi.mock("@/lib/billing/asaas-payments", async (importOriginal) => ({ ...(await importOriginal<object>()), paymentRequest: mocks.request }));
 import { reconcilePayment, type PaymentIntent } from "@/lib/billing/native-payments";
 import { sentryScrubHooks } from "@/lib/sentry/scrub";
+import { providerPaymentSchema } from "@/lib/billing/asaas-payments";
 
 const intent: PaymentIntent = { id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", organization_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", created_by: "cccccccc-cccc-4ccc-8ccc-cccccccccccc", plan_code: "essential", plan_name: "Essencial", billing_cycle: "monthly", payment_method: "PIX", installments: 1, base_cents: 7990, total_cents: 7990, expires_at: "2099-01-01T00:00:00Z", status: "pending", provider_customer_id: "cus_test", provider_payment_id: "pay_test", provider_installment_id: null };
 const payment = { id: "pay_test", customer: "cus_test", status: "RECEIVED", value: 79.9, billingType: "PIX", externalReference: intent.id };
@@ -17,6 +18,9 @@ beforeEach(() => {
   mocks.rpc.mockResolvedValue({ data: true, error: null });
 });
 
+it("aceita parcela nula retornada pelo Asaas em cobrança à vista", () => {
+  expect(providerPaymentSchema.safeParse({ ...payment, installmentNumber: null }).success).toBe(true);
+});
 it("só concede assinatura após consultar pagamento confirmado no provedor", async () => {
   mocks.request.mockResolvedValue(payment);
   expect((await reconcilePayment(intent)).status).toBe("paid");
