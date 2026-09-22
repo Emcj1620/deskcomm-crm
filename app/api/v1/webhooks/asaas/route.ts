@@ -1,6 +1,8 @@
 import { timingSafeEqual } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { env } from "@/lib/env";
+import { z } from "zod";
+import { reconcilePayment } from "@/lib/billing/native-payments";
 
 function validToken(value: string | null) {
   if (!env.ASAAS_WEBHOOK_TOKEN || !value) return false;
@@ -14,7 +16,16 @@ export async function POST(request: Request) {
   if (!body?.id || !body.event) return new Response("invalid_payload", { status: 400 });
   const checkoutId = body.checkout?.externalReference ?? body.subscription?.externalReference ?? body.payment?.externalReference;
   if (!checkoutId) return Response.json({ received: true });
+  if (!z.uuid().safeParse(checkoutId).success) return Response.json({ received: true });
   const admin = createAdminClient();
+  // Native purchases use an independent reference and verify the provider state.
+  // No event is acknowledged as processed before atomic settlement succeeds.
+  const { data: native, error: nativeError } = await admin.from("billing_payment_intents").select("*").eq("id", checkoutId).maybeSingle();
+  if (nativeError) return new Response("payment_store_error", { status: 500 });
+  if (native) {
+    try { await reconcilePayment(native); return Response.json({ received: true }); }
+    catch { return new Response("payment_reconciliation_pending", { status: 503 }); }
+  }
   const { data: checkout } = await admin.from("asaas_checkout_sessions").select("id,organization_id,plan_code,billing_cycle,status").eq("id", checkoutId).maybeSingle();
   if (!checkout) return new Response("unknown_checkout", { status: 404 });
   const { error: eventError } = await admin.from("asaas_checkout_events").insert({ event_id: body.id, checkout_id: checkout.id, event_name: body.event });

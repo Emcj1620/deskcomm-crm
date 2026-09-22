@@ -1,5 +1,9 @@
 # Migration Manifest — DeskcommCRM
 
+- `20260922154519_0266_billing_payment_grants`: remove DELETE/TRUNCATE herdados do default ACL da tabela de pagamentos; backend recebe somente SELECT/INSERT/UPDATE.
+
+- `20260922104618_0265_native_billing_payments`: cotações e tentativas de pagamento nativo, bloqueio de duplicidade por empresa e renovação transacional restrita ao backend. Não armazena dados de cartão.
+
 - `20260921232743_asaas_checkout_sessions`: registra checkouts Asaas vinculados à empresa/plano e eventos idempotentes; acesso apenas service-role.
 
 ## 2026-09-21 — Zapprofit

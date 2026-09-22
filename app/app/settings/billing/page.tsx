@@ -100,7 +100,7 @@ export default async function BillingPage() {
                 <li>
                   {plan.max_whatsapp_numbers} WhatsApp{plan.max_whatsapp_numbers > 1 ? "s" : ""}
                 </li>
-                <li>{traduzir("Agentes de IA, respostas sugeridas e follow-ups", idioma)}</li>
+                <li>{traduzir("Agentes de IA, respostas rápidas e follow-ups", idioma)}</li>
               </ul>
               <div className="mt-6 grid min-w-0 gap-2 sm:grid-cols-2">
                 <CheckoutButton planCode={plan.code} cycle="monthly" label="Assinar mensal" />
@@ -115,7 +115,7 @@ export default async function BillingPage() {
         <h2 className="text-sm font-semibold">{traduzir("Cobrança", idioma)}</h2>
         <p className="mt-2 text-sm text-muted-foreground">
           {traduzir(
-            "Escolha um plano para abrir o checkout seguro do Asaas. O mensal aceita Pix ou cartão e pode ser renovado por aqui; o anual aceita cartão em até 12x com os juros exibidos pelo Asaas.",
+            "Renove sua assinatura no popup, sem sair do sistema. Consulte o total antes de confirmar. O Pix é à vista; o cartão, quando habilitado, permite até 12x com as taxas apresentadas antes do pagamento. A renovação é manual, sem débito automático.",
             idioma,
           )}{" "}
           {suporte ? (

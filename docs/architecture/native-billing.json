@@ -1,0 +1,22 @@
+{
+  "title": "Pagamento nativo de assinatura",
+  "nodes": [
+    { "id": "subscription", "label": "Minha assinatura" },
+    { "id": "modal", "label": "NativeCheckout" },
+    { "id": "quote", "label": "API quote + catálogo + taxas Asaas" },
+    { "id": "intent", "label": "billing_payment_intents (somente backend)" },
+    { "id": "provider", "label": "Asaas payments / Pix QR" },
+    { "id": "reconcile", "label": "Webhook e consulta autenticada" },
+    { "id": "settlement", "label": "fn_settle_billing_payment + auditoria" }
+  ],
+  "edges": [
+    { "from": "subscription", "to": "modal" },
+    { "from": "modal", "to": "quote" },
+    { "from": "quote", "to": "intent" },
+    { "from": "intent", "to": "provider" },
+    { "from": "provider", "to": "reconcile" },
+    { "from": "reconcile", "to": "settlement" },
+    { "from": "settlement", "to": "subscription" },
+    { "from": "reconcile", "to": "modal" }
+  ]
+}

@@ -571,6 +571,9 @@ export const AUDIT_ACTIONS = [
   "lead.moved_to_pipeline",
   "platform.plan_created",
   "platform.plan_updated",
+  "billing.quote_created",
+  "billing.payment_submitted",
+  "billing.payment_confirmed",
 ] as const;
 
 /** Um código de auditoria. Derivado de `AUDIT_ACTIONS` — não redigite a lista. */
