@@ -13,8 +13,9 @@ export function CheckoutButton({ planCode, cycle, label }: { planCode: string; c
       const url = result.data.url ?? result.data.link;
       if (!url) throw new Error("checkout sem link");
       window.location.assign(url);
-    } catch {
-      window.alert("Não foi possível abrir o checkout agora. Tente novamente em instantes.");
+    } catch (error) {
+      const message = error instanceof Error && error.message ? error.message : "Não foi possível abrir o checkout agora. Tente novamente em instantes.";
+      window.alert(message);
       setBusy(false);
     }
   }
