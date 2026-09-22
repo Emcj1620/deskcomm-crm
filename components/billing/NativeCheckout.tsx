@@ -91,7 +91,7 @@ export function NativeCheckout({ planCode, cycle, label }: { planCode: string; c
     const read = (name: string) => String(data.get(name) ?? "");
     const body = { intent_id: quote.id,
       payer: { name: read("name"), email: read("email"), cpf_cnpj: read("cpf_cnpj"), phone: read("phone"), postal_code: read("postal_code"), address_number: read("address_number") },
-      ...(method === "CREDIT_CARD" ? { card: { holder_name: read("holder_name"), number: read("number"), expiry_month: read("expiry_month"), expiry_year: read("expiry_year"), ccv: read("ccv") } } : {}),
+      ...(method === "CREDIT_CARD" ? { card: { holder_name: read("holder_name"), number: read("number"), expiry_month: read("expiry_month"), expiry_year: /^\d{2}$/.test(read("expiry_year")) ? `20${read("expiry_year")}` : read("expiry_year"), ccv: read("ccv") } } : {}),
     };
     // Sensitive fields are never persisted in state, storage or logs.
     form.reset();
@@ -148,8 +148,16 @@ export function NativeCheckout({ planCode, cycle, label }: { planCode: string; c
           {method === "CREDIT_CARD" && <fieldset disabled={busy} className="grid min-w-0 grid-cols-3 gap-3 border-t pt-4"><legend className="sr-only">Cartão de crédito</legend>
             <div className="col-span-3"><Field name="number" label="Número do cartão" inputMode="numeric" maxLength={23} /></div>
             <div className="col-span-3"><Field name="holder_name" label="Nome impresso no cartão" maxLength={120} /></div>
-            <Field name="expiry_month" label="Mês (MM)" inputMode="numeric" pattern="0[1-9]|1[0-2]" maxLength={2} /><Field name="expiry_year" label="Ano (AAAA)" inputMode="numeric" pattern="20[0-9]{2}" maxLength={4} />
-            <Field name="ccv" label="Código de segurança" inputMode="numeric" type="password" maxLength={4} />
+            <div className="col-span-3 grid min-w-0 grid-cols-2 items-end gap-3">
+              <fieldset className="min-w-0">
+                <legend className="mb-1 text-[11px] font-medium uppercase tracking-wide">Validade</legend>
+                <div className="grid min-w-0 grid-cols-2 gap-2">
+                  <Input required name="expiry_month" aria-label="Mês de validade" autoComplete="off" placeholder="MM" inputMode="numeric" pattern="0[1-9]|1[0-2]" maxLength={2} className="h-10 min-w-0 bg-muted/30 text-base sm:text-sm" />
+                  <Input required name="expiry_year" aria-label="Ano de validade" autoComplete="off" placeholder="AA" inputMode="numeric" pattern="[0-9]{2}" maxLength={2} className="h-10 min-w-0 bg-muted/30 text-base sm:text-sm" />
+                </div>
+              </fieldset>
+              <Field name="ccv" label="CVC / CVV" placeholder="123" inputMode="numeric" type="password" maxLength={4} />
+            </div>
           </fieldset>}
           {quote &&
           <section className="rounded-lg border bg-muted/30 p-4 text-sm" aria-label="Resumo do pagamento"><h3 className="break-words font-semibold">{quote.plan_name} · {cycle === "annual" ? "Anual" : "Mensal"}</h3>

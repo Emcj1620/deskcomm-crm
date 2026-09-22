@@ -64,9 +64,33 @@ it("habilita cartão anual, limita a 12x e mostra acréscimo antes de confirmar"
   await screen.findByRole("button", { name: /Confirmar pagamento/ });
   expect(screen.getByText("Acréscimo do cartão")).toBeTruthy();
   expect(screen.getByLabelText("Número do cartão")).toBeTruthy();
-  expect(screen.getByLabelText("Código de segurança")).toBeTruthy();
+  expect(screen.getByLabelText("CVC / CVV")).toBeTruthy();
+  expect(screen.getByRole("group", { name: "Validade" })).toBeTruthy();
+  expect(screen.getByPlaceholderText("MM")).toBeTruthy();
+  expect(screen.getByPlaceholderText("AA").getAttribute("maxlength")).toBe("2");
   expect(fetchMock).toHaveBeenCalledTimes(2);
   expect(JSON.parse(fetchMock.mock.calls[1]?.[1].body)).toMatchObject({ payment_method: "CREDIT_CARD", installments: 12 });
+});
+
+it("converte ano curto para o Asaas somente ao confirmar pagamento", async () => {
+  const cardQuote = { ...quote, payment_method: "CREDIT_CARD" };
+  const fetchMock = vi.fn()
+    .mockResolvedValueOnce(response({ data: { payment: null, card_enabled: true } }))
+    .mockResolvedValueOnce(response({ data: cardQuote }))
+    .mockResolvedValueOnce(response({ data: { id: quote.id, status: "pending", total_cents: 7990, payment_method: "CREDIT_CARD" } }));
+  vi.stubGlobal("fetch", fetchMock);
+  render(<CheckoutButton planCode="essential" cycle="monthly" label="Assinar" />);
+  fireEvent.click(screen.getByRole("button", { name: "Assinar" }));
+  await waitFor(() => expect(screen.getByRole("button", { name: "Cartão" }).hasAttribute("disabled")).toBe(false));
+  fireEvent.click(screen.getByRole("button", { name: "Cartão" }));
+  fireEvent.change(screen.getByLabelText("Ano de validade"), { target: { value: "29" } });
+  fireEvent.change(screen.getByLabelText("Mês de validade"), { target: { value: "08" } });
+  await advance();
+  const submit = await screen.findByRole("button", { name: /Confirmar pagamento/ });
+  expect(fetchMock).toHaveBeenCalledTimes(2);
+  fireEvent.submit(submit.closest("form")!);
+  await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
+  expect(JSON.parse(fetchMock.mock.calls[2]?.[1].body).card).toMatchObject({ expiry_year: "2029", expiry_month: "08" });
 });
 
 it("oferece somente 1x no cartão mensal", async () => {
